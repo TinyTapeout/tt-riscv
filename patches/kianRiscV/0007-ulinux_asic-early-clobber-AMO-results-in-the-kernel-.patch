@@ -1,0 +1,151 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Sylvain Munaut <tnt@246tNt.com>
+Date: Wed, 18 Nov 2026 13:41:50 +0000
+Subject: ulinux_asic: early-clobber AMO results in the kernel (ttsky25b
+ regfile edition)
+
+The KianV regfile edition on ttsky25b (#970) computes an AMO with
+rd == rs2 on the value just loaded from memory instead of rs2: the
+register file macro returns the new value of a register read in the
+cycle it is written. The kernel then crashes during boot.
+
+Mark the result of the kernel's AMO inline asm (atomic.h, cmpxchg.h,
+bitops.h) early-clobber, so the compiler never gives rd the register
+of rs2. Other KianV chips are unaffected beyond register allocation.
+---
+ ...iscv-amo-earlyclobber-regfile-errata.patch | 126 ++++++++++++++++++
+ 1 file changed, 126 insertions(+)
+ create mode 100644 asic/os/ulinux_asic_kianv_soc/bldroot/board/kianv/rv32ima/patches/linux/0020-riscv-amo-earlyclobber-regfile-errata.patch
+
+diff --git a/asic/os/ulinux_asic_kianv_soc/bldroot/board/kianv/rv32ima/patches/linux/0020-riscv-amo-earlyclobber-regfile-errata.patch b/asic/os/ulinux_asic_kianv_soc/bldroot/board/kianv/rv32ima/patches/linux/0020-riscv-amo-earlyclobber-regfile-errata.patch
+new file mode 100644
+index 0000000..bdfd689
+--- /dev/null
++++ b/asic/os/ulinux_asic_kianv_soc/bldroot/board/kianv/rv32ima/patches/linux/0020-riscv-amo-earlyclobber-regfile-errata.patch
+@@ -0,0 +1,126 @@
++From: Sylvain Munaut <tnt@246tNt.com>
++Subject: [PATCH] riscv: early-clobber AMO results (KianV ttsky25b regfile edition)
++
++The KianV regfile edition on ttsky25b computes an AMO with rd == rs2 on
++the value just loaded from memory instead of rs2. Mark the AMO results
++early-clobber ("=&r") so the compiler never gives rd the register of
++rs2. Harmless on other cores.
++
++diff --git a/arch/riscv/include/asm/atomic.h b/arch/riscv/include/asm/atomic.h
++index f5dfef6..30884c9 100644
++--- a/arch/riscv/include/asm/atomic.h
+++++ b/arch/riscv/include/asm/atomic.h
++@@ -93,7 +93,7 @@ c_type arch_atomic##prefix##_fetch_##op##_relaxed(c_type i,		\
++ 	register c_type ret;						\
++ 	__asm__ __volatile__ (						\
++ 		"	amo" #asm_op "." #asm_type " %1, %2, %0"	\
++-		: "+A" (v->counter), "=r" (ret)				\
+++		: "+A" (v->counter), "=&r" (ret)				\
++ 		: "r" (I)						\
++ 		: "memory");						\
++ 	return ret;							\
++@@ -104,7 +104,7 @@ c_type arch_atomic##prefix##_fetch_##op(c_type i, atomic##prefix##_t *v)	\
++ 	register c_type ret;						\
++ 	__asm__ __volatile__ (						\
++ 		"	amo" #asm_op "." #asm_type ".aqrl  %1, %2, %0"	\
++-		: "+A" (v->counter), "=r" (ret)				\
+++		: "+A" (v->counter), "=&r" (ret)				\
++ 		: "r" (I)						\
++ 		: "memory");						\
++ 	return ret;							\
++diff --git a/arch/riscv/include/asm/bitops.h b/arch/riscv/include/asm/bitops.h
++index 9ffc355..38b7672 100644
++--- a/arch/riscv/include/asm/bitops.h
+++++ b/arch/riscv/include/asm/bitops.h
++@@ -289,7 +289,7 @@ legacy:
++ 	__mask = BIT_MASK(nr);					\
++ 	__asm__ __volatile__ (					\
++ 		__AMO(op) #ord " %0, %2, %1"			\
++-		: "=r" (__res), "+A" (addr[BIT_WORD(nr)])	\
+++		: "=&r" (__res), "+A" (addr[BIT_WORD(nr)])	\
++ 		: "r" (mod(__mask))				\
++ 		: "memory");					\
++ 	((__res & __mask) != 0);				\
++@@ -447,7 +447,7 @@ static inline bool xor_unlock_is_negative_byte(unsigned long mask,
++ 	unsigned long res;
++ 	__asm__ __volatile__ (
++ 		__AMO(xor) ".rl %0, %2, %1"
++-		: "=r" (res), "+A" (*addr)
+++		: "=&r" (res), "+A" (*addr)
++ 		: "r" (__NOP(mask))
++ 		: "memory");
++ 	return (res & BIT(7)) != 0;
++diff --git a/arch/riscv/include/asm/cmpxchg.h b/arch/riscv/include/asm/cmpxchg.h
++index 2f4726d..e298009 100644
++--- a/arch/riscv/include/asm/cmpxchg.h
+++++ b/arch/riscv/include/asm/cmpxchg.h
++@@ -20,14 +20,14 @@
++ 	case 4:								\
++ 		__asm__ __volatile__ (					\
++ 			"	amoswap.w %0, %2, %1\n"			\
++-			: "=r" (__ret), "+A" (*__ptr)			\
+++			: "=&r" (__ret), "+A" (*__ptr)			\
++ 			: "r" (__new)					\
++ 			: "memory");					\
++ 		break;							\
++ 	case 8:								\
++ 		__asm__ __volatile__ (					\
++ 			"	amoswap.d %0, %2, %1\n"			\
++-			: "=r" (__ret), "+A" (*__ptr)			\
+++			: "=&r" (__ret), "+A" (*__ptr)			\
++ 			: "r" (__new)					\
++ 			: "memory");					\
++ 		break;							\
++@@ -54,7 +54,7 @@
++ 		__asm__ __volatile__ (					\
++ 			"	amoswap.w %0, %2, %1\n"			\
++ 			RISCV_ACQUIRE_BARRIER				\
++-			: "=r" (__ret), "+A" (*__ptr)			\
+++			: "=&r" (__ret), "+A" (*__ptr)			\
++ 			: "r" (__new)					\
++ 			: "memory");					\
++ 		break;							\
++@@ -62,7 +62,7 @@
++ 		__asm__ __volatile__ (					\
++ 			"	amoswap.d %0, %2, %1\n"			\
++ 			RISCV_ACQUIRE_BARRIER				\
++-			: "=r" (__ret), "+A" (*__ptr)			\
+++			: "=&r" (__ret), "+A" (*__ptr)			\
++ 			: "r" (__new)					\
++ 			: "memory");					\
++ 		break;							\
++@@ -89,7 +89,7 @@
++ 		__asm__ __volatile__ (					\
++ 			RISCV_RELEASE_BARRIER				\
++ 			"	amoswap.w %0, %2, %1\n"			\
++-			: "=r" (__ret), "+A" (*__ptr)			\
+++			: "=&r" (__ret), "+A" (*__ptr)			\
++ 			: "r" (__new)					\
++ 			: "memory");					\
++ 		break;							\
++@@ -97,7 +97,7 @@
++ 		__asm__ __volatile__ (					\
++ 			RISCV_RELEASE_BARRIER				\
++ 			"	amoswap.d %0, %2, %1\n"			\
++-			: "=r" (__ret), "+A" (*__ptr)			\
+++			: "=&r" (__ret), "+A" (*__ptr)			\
++ 			: "r" (__new)					\
++ 			: "memory");					\
++ 		break;							\
++@@ -123,14 +123,14 @@
++ 	case 4:								\
++ 		__asm__ __volatile__ (					\
++ 			"	amoswap.w.aqrl %0, %2, %1\n"		\
++-			: "=r" (__ret), "+A" (*__ptr)			\
+++			: "=&r" (__ret), "+A" (*__ptr)			\
++ 			: "r" (__new)					\
++ 			: "memory");					\
++ 		break;							\
++ 	case 8:								\
++ 		__asm__ __volatile__ (					\
++ 			"	amoswap.d.aqrl %0, %2, %1\n"		\
++-			: "=r" (__ret), "+A" (*__ptr)			\
+++			: "=&r" (__ret), "+A" (*__ptr)			\
++ 			: "r" (__new)					\
++ 			: "memory");					\
++ 		break;							\
