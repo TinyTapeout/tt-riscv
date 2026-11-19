@@ -13,7 +13,6 @@ Time: about 15 minutes, most of it flashing and booting.
 | ttgf0p3                      | `tt_um_kianV_rv32ima_uLinux_SoC`                                              | 16 MiB image from this repo                       | should work, not verified                                 |
 | ttsky25b                     | `tt_um_kianv_rv32_regfile` (#970), regfile edition                            | 16 MiB image from this repo                       | should work, not verified                                 |
 | tt06                         | `tt_um_kianV_rv32ima_uLinux_SoC` (#910), 30 MHz, 8 MiB                        | "KianV uLinux Image (TT06)" preset in the Flasher | tested on silicon (RP2040 board, shell after about 185 s) |
-| tt05, ttihp0p1               | `tt_um_kianV_rv32ima_uLinux_SoC`                                              | "KianV uLinux Image (TT06)" preset in the Flasher | not verified                                              |
 
 ## 1. Flash
 
