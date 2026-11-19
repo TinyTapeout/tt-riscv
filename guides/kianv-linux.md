@@ -45,7 +45,7 @@ Expected output:
 ```
 KianV RISC-V uLinux ASIC Tiny Tapeout SOC
 -----------------------------------------
-loading kernel Image from flash ......        (about 22 s)
+loading kernel Image from flash .......       (about 8 s)
 starting kernel
 [    0.000000] Linux version 6.8.0-rc1 ...
 ...
@@ -55,7 +55,7 @@ starting pid 32, tty '/dev/console': '/sbin/getty -L -n -l /bin/sh console 0 vt1
 / #
 ```
 
-The shell prompt appears about **150 s** after reset. Press Enter if you don't see it.
+The shell prompt appears about **140 s** after reset. Press Enter if you don't see it.
 
 **A few garbled lines after `clk: Disabling unused clocks` are normal.** They appear on every boot,
 when the kernel's serial driver takes over the console.

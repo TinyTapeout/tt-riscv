@@ -13,7 +13,6 @@ built by the Buildroot external tree in [`../linux/br2-external`](../linux/br2-e
 | 0004      | Pin the Buildroot commit                                                             | build only         |
 | 0005      | `make xip`: Linux kernel executing in place from SPI flash (experimental, opt-in)    | tested on ttsky25a |
 | 0006      | Zephyr port: system timer at the real 10 kHz `mtime` rate                            | tested on ttsky25a |
-| 0007      | Bootloader copies the kernel by 32-bit words (default)                               | tested on ttsky25a |
 
 To refresh a patch: apply the series in a clone, change and commit there, then
 `git format-patch --no-signature --zero-commit <KIANRISCV_COMMIT>..HEAD -o patches/kianRiscV -- . ':(exclude).github'`.

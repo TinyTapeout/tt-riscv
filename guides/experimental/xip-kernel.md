@@ -6,12 +6,12 @@ By default the bootloader copies the 3.4 MB kernel Image from flash to PSRAM bef
 Patch 0005 adds an alternative: the kernel runs directly from flash (XIP), and only its data is copied
 to PSRAM.
 
-|                          | Byte copy (old default) | Word copy (default here) | XIP     |
-| ------------------------ | ----------------------- | ------------------------ | ------- |
-| Kernel copy              | 79 s                    | 22 s                     | none    |
-| `/ #` prompt after reset | 209 s                   | 152 s                    | 128 s   |
-| Free RAM after boot      | 10.4 MB                 | 10.4 MB                  | 12.2 MB |
-| Code speed               | same                    | same                     | same    |
+|                          | Default copy (8 words per iteration) | XIP     |
+| ------------------------ | ------------------------------------ | ------- |
+| Kernel copy              | 8 s                                  | none    |
+| `/ #` prompt after reset | about 138 s                          | 128 s   |
+| Free RAM after boot      | 10.4 MB                              | 12.2 MB |
+| Code speed               | same                                 | same    |
 
 **Why the code runs no slower.** Flash and both PSRAMs sit behind the same quad-SPI controller in the SoC
 (15 MHz, 6 wait cycles, no cache). Fetching code from flash costs exactly the same as fetching it from PSRAM.
