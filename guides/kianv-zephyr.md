@@ -56,18 +56,23 @@ Read value 0x8
 ### MicroPython (m)
 
 ```
-MicroPython 9bf76fcf9-dirty on 2026-11-17; RV32IMA uLinux SoC TT05 with KianV
->>> print(355/113, [x*x for x in range(10)])
-3.141593 [0, 1, 4, 9, 16, 25, 36, 49, 64, 81]
+MicroPython v1.29.0 on 2026-11-18; KianV RV32IMA SoC (Tiny Tapeout) with KianV
+>>> print(2**100)
+1267650600228229401496703205376
+>>> import time; t = time.ticks_ms(); time.sleep(2); print(time.ticks_diff(time.ticks_ms(), t))
+2009
 ```
 
-This is a minimal port (MicroPython 1.19.1, 6 MB heap):
+MicroPython 1.29 with big integers, `time` (ticks, sleep; `time.time()` counts seconds since power-up),
+`machine` (`mem8`/`mem16`/`mem32`, `reset()`), `random`, `json`, `re`, `struct` and `help()`. About
+6.9 MB of heap is free at the prompt. Limits:
 
-- No big integers, and no `machine`, `time` or `help`.
-- `gc.mem_free()` takes about a minute, because it scans the whole heap.
+- `gc.collect()` and `gc.mem_free()` take tens of seconds, because they scan the whole heap.
 - Wait for the `>>>` prompt before typing: characters sent while it is busy are lost.
+- No filesystem: there is nothing to `import` from or `open()`.
 
 ## Credits
 
 Zephyr and MicroPython ports: Hirosh Dabui ([splinedrive/kianRiscV](https://github.com/splinedrive/kianRiscV),
-[splinedrive/micropython](https://github.com/splinedrive/micropython)).
+[splinedrive/micropython](https://github.com/splinedrive/micropython)); the port runs on upstream
+MicroPython ([micropython/micropython](https://github.com/micropython/micropython)).
