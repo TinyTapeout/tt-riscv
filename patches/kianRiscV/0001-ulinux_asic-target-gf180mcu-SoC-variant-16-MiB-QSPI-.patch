@@ -1,7 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
-From: Uri Shaked <uri@urishaked.com>
+From: Lee Kage <magic-smoke@tinytapeout.com>
 Date: Thu, 28 May 2026 14:50:08 +0000
-Subject: [PATCH 1/7] ulinux_asic: target gf180mcu SoC variant (16 MiB QSPI
+Subject: ulinux_asic: target gf180mcu SoC variant (16 MiB QSPI
  PSRAM, GPIO peripheral)
 
 Update the uLinux ASIC system image build to match the TinyTapeout
@@ -95,7 +95,7 @@ index 8c73862..35adbf5 100644
  SOC_HAS_SPI ?= 0
  
 diff --git a/asic/os/ulinux_asic_kianv_soc/bootloader/bootloader.c b/asic/os/ulinux_asic_kianv_soc/bootloader/bootloader.c
-index 1dc3d66..7827d35 100644
+index 137498e..62294c8 100644
 --- a/asic/os/ulinux_asic_kianv_soc/bootloader/bootloader.c
 +++ b/asic/os/ulinux_asic_kianv_soc/bootloader/bootloader.c
 @@ -23,9 +23,9 @@

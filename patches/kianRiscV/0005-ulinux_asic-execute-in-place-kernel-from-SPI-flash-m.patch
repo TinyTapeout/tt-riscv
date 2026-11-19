@@ -1,7 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
-From: Uri Shaked <uri@urishaked.com>
-Date: Tue, 17 Nov 2026 15:24:32 +0000
-Subject: [PATCH 5/7] ulinux_asic: execute-in-place kernel from SPI flash (make
+From: Lee Kage <magic-smoke@tinytapeout.com>
+Date: Wed, 18 Nov 2026 12:31:12 +0000
+Subject: ulinux_asic: execute-in-place kernel from SPI flash (make
  xip)
 
 Add CONFIG_NOMMU_XIP_KERNEL: a no-MMU RISC-V kernel whose text, rodata
@@ -19,18 +19,21 @@ On ttsky25a silicon: reset to shell 209 s (byte copy) / 152 s (word copy)
 
 Targets: make xip (xip/Image + xip/bootloader.bin), make xip-sim (QEMU pflash).
 
+Rebased on upstream cc05de6, whose bootloader already copies by words: the
+XIP patch no longer adds its own WORD_COPY option.
+
 Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
 ---
  asic/os/ulinux_asic_kianv_soc/Makefile        |  48 ++-
  asic/os/ulinux_asic_kianv_soc/README.md       |  22 ++
  ...-riscv-nommu-execute-in-place-kernel.patch | 298 ++++++++++++++++++
- .../ulinux_asic_kianv_soc/bootloader/Makefile |   8 +-
- .../bootloader/bootloader.c                   |  23 +-
+ .../ulinux_asic_kianv_soc/bootloader/Makefile |   7 +-
+ .../bootloader/bootloader.c                   |  11 +-
  asic/os/ulinux_asic_kianv_soc/xip/.gitignore  |   3 +
  .../xip/linux-xip.fragment                    |   4 +
  asic/os/ulinux_asic_kianv_soc/xip/mkflash.py  |   7 +
  .../xip/qemu-flash-stub.S                     |   7 +
- 9 files changed, 416 insertions(+), 4 deletions(-)
+ 9 files changed, 403 insertions(+), 4 deletions(-)
  create mode 100644 asic/os/ulinux_asic_kianv_soc/bldroot/board/kianv/rv32ima/patches/linux/0010-riscv-nommu-execute-in-place-kernel.patch
  create mode 100644 asic/os/ulinux_asic_kianv_soc/xip/.gitignore
  create mode 100644 asic/os/ulinux_asic_kianv_soc/xip/linux-xip.fragment
@@ -115,7 +118,7 @@ index 6840965..ae05fea 100644
 +	@rm -rf $(DIR)/output $(OUTPUT_DTB_FILE) $(OUTPUT_DTS_FILE) $(XIP_DIR) xip/Image xip/bootloader.bin
  
 diff --git a/asic/os/ulinux_asic_kianv_soc/README.md b/asic/os/ulinux_asic_kianv_soc/README.md
-index 93d7f10..e58b6a4 100644
+index 93d7f10..f5dbf6c 100644
 --- a/asic/os/ulinux_asic_kianv_soc/README.md
 +++ b/asic/os/ulinux_asic_kianv_soc/README.md
 @@ -43,3 +43,25 @@ sudo apt install build-essential gcc g++ binutils patch tar gzip bzip2 xz-utils
@@ -134,10 +137,10 @@ index 93d7f10..e58b6a4 100644
 +
 +Measured on ttsky25a silicon (30 MHz), same rootfs:
 +
-+| | byte-copy bootloader | `WORD_COPY=1` bootloader | XIP |
++| | old byte-copy bootloader | default bootloader (8 words per iteration) | XIP |
 +|---|---|---|---|
-+| bootloader copy | 79 s | 22 s | none |
-+| reset to `/ # ` | 209 s | 152 s | 128 s |
++| bootloader copy | 79 s | 8 s | none |
++| reset to `/ # ` | 209 s | about 138 s | 128 s |
 +| MemTotal / MemFree after boot | 13968 / 10396 KB | same | 15768 / 12196 KB |
 +
 +Kernel and userspace speed are unchanged (flash and PSRAM go through the same quad-SPI
@@ -449,10 +452,10 @@ index 0000000..e83ec2d
 + 	else
 + 		vmlinux_start = __pa_symbol(&_start);
 diff --git a/asic/os/ulinux_asic_kianv_soc/bootloader/Makefile b/asic/os/ulinux_asic_kianv_soc/bootloader/Makefile
-index 205fa3a..60b9195 100644
+index 205fa3a..6b5e583 100644
 --- a/asic/os/ulinux_asic_kianv_soc/bootloader/Makefile
 +++ b/asic/os/ulinux_asic_kianv_soc/bootloader/Makefile
-@@ -9,8 +9,14 @@ TOOLCHAIN_PREFIX ?= $(TOOLCHAIN_PATH)/riscv32-buildroot-linux-uclibc
+@@ -9,8 +9,13 @@ TOOLCHAIN_PREFIX ?= $(TOOLCHAIN_PATH)/riscv32-buildroot-linux-uclibc
  CPU_FREQ ?= 30000000
  SPI_FREQ ?= 10000000
  BAUDRATE ?= 115200
@@ -463,39 +466,23 @@ index 205fa3a..60b9195 100644
 +endif
  SOC_HAS_SPI ?= 0
 +XIP_KERNEL ?= 0
-+WORD_COPY ?= 0
  
  LDS_FILE ?= kianv.ld
  START_FILE = crt0.S
-@@ -22,7 +28,7 @@ RVCPPFLAGS = -fno-exceptions -fno-enforce-eh-specs
+@@ -22,7 +27,7 @@ RVCPPFLAGS = -fno-exceptions -fno-enforce-eh-specs
  RVLDFLAGS = -Wl,-melf32lriscv -Wl,-belf32-littleriscv -Wl,--no-relax
  RVCFLAGS = -fno-pic -march=rv32ima -mabi=ilp32 -fno-stack-protector -w -Wl,--no-relax -ffreestanding -Wl,--strip-debug,-Map=bootloader.map
  RVCFLAGS += -nostartfiles -DCPU_FREQ=$(CPU_FREQ) -DSPI_FREQ=$(SPI_FREQ) -DBAUDRATE=$(BAUDRATE)
 -RVCFLAGS += -DIMAGE_SIZE=$(IMAGE_SIZE) -DSOC_HAS_SPI=$(SOC_HAS_SPI) -Wl,--no-warn-rwx-segments
-+RVCFLAGS += -DIMAGE_SIZE=$(IMAGE_SIZE) -DSOC_HAS_SPI=$(SOC_HAS_SPI) -DXIP_KERNEL=$(XIP_KERNEL) -DWORD_COPY=$(WORD_COPY) -Wl,--no-warn-rwx-segments
++RVCFLAGS += -DIMAGE_SIZE=$(IMAGE_SIZE) -DSOC_HAS_SPI=$(SOC_HAS_SPI) -DXIP_KERNEL=$(XIP_KERNEL) -Wl,--no-warn-rwx-segments
  
  all: bootloader.bin
  	@echo "Image size is $(IMAGE_SIZE) bytes"
 diff --git a/asic/os/ulinux_asic_kianv_soc/bootloader/bootloader.c b/asic/os/ulinux_asic_kianv_soc/bootloader/bootloader.c
-index 7827d35..426bd68 100644
+index 62294c8..1e23c8c 100644
 --- a/asic/os/ulinux_asic_kianv_soc/bootloader/bootloader.c
 +++ b/asic/os/ulinux_asic_kianv_soc/bootloader/bootloader.c
-@@ -48,6 +48,14 @@ void* memcpy_verbose(void* dest, const void* src, size_t count) {
-     return dest;
- }
- 
-+/* one flash read and one PSRAM write per 32-bit word instead of per byte */
-+void memcpy_words_verbose(uint32_t *d, const uint32_t *s, size_t words) {
-+    for (size_t i = 0; i < words; i++) {
-+        if ((i & (CHUNK_SIZE / 4 - 1)) == 0) printf(".");
-+        d[i] = s[i];
-+    }
-+}
-+
- int main() {
-   uint32_t freq = CPU_FREQ;
-   *((volatile uint32_t *) 0x10000010) = ((freq/10000) << 16) | (freq/BAUDRATE);
-@@ -61,13 +69,26 @@ int main() {
+@@ -74,13 +74,22 @@ int main() {
    printf("-----------------------------------------\n");
  
  
@@ -508,11 +495,7 @@ index 7827d35..426bd68 100644
 +  void *kernel = (void *)KERNEL_IMAGE;
 +#else
    printf("loading kernel Image from flash ");
-+#if WORD_COPY
-+  memcpy_words_verbose((uint32_t *)SDRAM_START, (const uint32_t *)KERNEL_IMAGE, (IMAGE_SIZE + 3) / 4);
-+#else
-   memcpy_verbose(SDRAM_START, KERNEL_IMAGE, IMAGE_SIZE);
-+#endif
+   copy_image_verbose((void *)SDRAM_START, (const void *)KERNEL_IMAGE, IMAGE_SIZE);
    printf("\nstarting kernel\n");
 +  void *kernel = (void *)SDRAM_START;
 +#endif

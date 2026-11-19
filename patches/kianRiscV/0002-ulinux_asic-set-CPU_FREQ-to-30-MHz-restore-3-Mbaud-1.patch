@@ -1,7 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
-From: Uri Shaked <uri@urishaked.com>
+From: Lee Kage <magic-smoke@tinytapeout.com>
 Date: Thu, 28 May 2026 14:59:06 +0000
-Subject: [PATCH 2/7] ulinux_asic: set CPU_FREQ to 30 MHz, restore 3 Mbaud / 10
+Subject: ulinux_asic: set CPU_FREQ to 30 MHz, restore 3 Mbaud / 10
  MHz SPI defaults
 
 The gf180mcu SoC actually runs at 30 MHz, not 16 MHz, so revert UART and

@@ -1,7 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
-From: Uri Shaked <uri@urishaked.com>
+From: Lee Kage <magic-smoke@tinytapeout.com>
 Date: Thu, 28 May 2026 15:49:01 +0000
-Subject: [PATCH 4/7] ulinux_asic: pin the Buildroot SHA
+Subject: ulinux_asic: pin the Buildroot SHA
 
 Pin cnlohr/buildroot to 851edd247f5e2e8e10f943c52218bc54c657688f so
 buildroot/output/ is deterministic across runs, then cache buildroot/dl

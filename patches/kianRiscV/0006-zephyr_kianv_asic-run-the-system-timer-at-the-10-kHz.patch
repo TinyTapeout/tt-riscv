@@ -1,7 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
-From: Uri Shaked <uri@urishaked.com>
+From: Lee Kage <magic-smoke@tinytapeout.com>
 Date: Tue, 17 Nov 2026 12:01:12 +0000
-Subject: [PATCH 6/7] zephyr_kianv_asic: run the system timer at the 10 kHz
+Subject: zephyr_kianv_asic: run the system timer at the 10 kHz
  mtime rate
 
 The KianV CLINT advances mtime at CPU_FREQ / UART_DIV[31:16], and the

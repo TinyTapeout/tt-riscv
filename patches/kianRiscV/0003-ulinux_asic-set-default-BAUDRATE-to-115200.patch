@@ -1,7 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
-From: Uri Shaked <uri@urishaked.com>
+From: Lee Kage <magic-smoke@tinytapeout.com>
 Date: Thu, 28 May 2026 15:00:12 +0000
-Subject: [PATCH 3/7] ulinux_asic: set default BAUDRATE to 115200
+Subject: ulinux_asic: set default BAUDRATE to 115200
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit

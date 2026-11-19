@@ -15,4 +15,4 @@ built by the Buildroot external tree in [`../linux/br2-external`](../linux/br2-e
 | 0006      | Zephyr port: system timer at the real 10 kHz `mtime` rate                            | tested on ttsky25a |
 
 To refresh a patch: apply the series in a clone, change and commit there, then
-`git format-patch --no-signature --zero-commit <KIANRISCV_COMMIT>..HEAD -o patches/kianRiscV -- . ':(exclude).github'`.
+`git format-patch --keep-subject --no-signature --zero-commit <KIANRISCV_COMMIT>..HEAD -o patches/kianRiscV -- . ':(exclude).github'`.
