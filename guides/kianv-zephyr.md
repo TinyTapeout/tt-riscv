@@ -53,6 +53,18 @@ Read value 0x8
 `devmem 0x10600008` reads the GPIO `ui_in` register. Other useful commands: `kernel uptime`,
 `kernel sleep 1000`, `kernel thread list`, `help`.
 
+`devmem` can also drive the [7-segment display](#drive-the-7-segment-display). This shows a **2**:
+
+```
+kianv:~$ devmem 0x10600004 32 0x5b
+kianv:~$ devmem 0x10600000 32 0xef
+kianv:~$ devmem 0x10600000 32 0
+```
+
+The first command sets the segments, the second gives every `uo_out` pin except `uo_out[4]` to the GPIO block,
+and the third gives them back. `uo_out[4]` stays the UART TX, so the shell keeps working. It is also segment e,
+which is lit while the line idles high, and flickers while the shell prints.
+
 ### MicroPython (m)
 
 ```
@@ -70,6 +82,35 @@ MicroPython 1.29 with big integers, `time` (ticks, sleep; `time.time()` counts s
 - `gc.collect()` and `gc.mem_free()` take tens of seconds, because they scan the whole heap.
 - Wait for the `>>>` prompt before typing: characters sent while it is busy are lost.
 - No filesystem: there is nothing to `import` from or `open()`.
+
+## Drive the 7-segment display
+
+The demo board's 7-segment display is wired to `uo_out`: segments a-g on bits 0-6, the decimal point on bit 7.
+The KianV GPIO block has three registers:
+
+| Address    | Register | Use                                         |
+| ---------- | -------- | ------------------------------------------- |
+| 0x10600000 | `UO_EN`  | 1 = the GPIO block drives that `uo_out` pin |
+| 0x10600004 | `UO_OUT` | value for the enabled `uo_out` pins         |
+| 0x10600008 | `UI_IN`  | reads `ui_in`                               |
+
+This counts 0 to 9 from MicroPython (press **m**). Paste it with **Ctrl-E**, then press **Ctrl-D**:
+
+```python
+import machine, time
+EN, OUT = 0x10600000, 0x10600004
+DIGITS = (0x3F, 0x06, 0x5B, 0x4F, 0x66, 0x6D, 0x7D, 0x07, 0x7F, 0x6F)
+machine.mem32[EN] = 0xFF            # GPIO drives uo_out[7:0]; UART TX (uo4) goes quiet
+for d in DIGITS:
+    machine.mem32[OUT] = d
+    time.sleep(0.5)
+machine.mem32[OUT] = 0
+machine.mem32[EN] = 0               # uo4 back to the UART
+```
+
+The display counts 0 to 9, half a second per digit, then goes blank and the `>>>` prompt returns. Segment e is
+also the UART TX pin (`uo_out[4]`), so the REPL is silent while the digits show. Tested on ttsky25a.
+For the Zephyr shell, see the `devmem` example above. On Linux, run [`/root/hello_7seg`](kianv-linux.md#3-try-it).
 
 ## Credits
 

@@ -37,6 +37,29 @@ Both chips run the same image. On ttsky25a, `sum(i*i for i in range(10000))` tak
 More examples, peripherals and `mpremote` over a USB bridge:
 [ttsky25a-tinyQV/micropython](https://github.com/TinyTapeout/ttsky25a-tinyQV/tree/main/micropython).
 
+## Drive the 7-segment display
+
+The demo board's 7-segment display is wired to `uo_out`: segments a-g on bits 0-6, the decimal point on bit 7.
+`Pin(n, Pin.OUT)` hands `uo_out[n]` to the GPIO peripheral, whose output register is at 0x8000040.
+`uo_out[0]` is both segment a and the UART TX, so this demo borrows it and gives it back at the end.
+Paste it with **Ctrl-E**, then press **Ctrl-D**:
+
+```python
+import machine, time
+from machine import Pin
+OUT = 0x8000040                     # TinyQV GPIO output register
+DIGITS = (0x3F, 0x06, 0x5B, 0x4F, 0x66, 0x6D, 0x7D, 0x07, 0x7F, 0x6F)
+seg = [Pin(n, Pin.OUT) for n in range(8)]   # takes uo0 (UART TX) too: the REPL goes quiet
+for d in DIGITS:
+    machine.mem32[OUT] = d
+    time.sleep(0.5)
+machine.mem32[OUT] = 0
+Pin(0, Pin.OUT, func_sel=2)         # uo0 back to the UART
+```
+
+The display counts 0 to 9, half a second per digit, then goes blank and the `>>>` prompt returns. The REPL is
+silent while the digits show. Tested on ttsky25a (#495 and #687).
+
 ## Notes
 
 - The MicroPython image is 1.27 MB and overwrites the KianV bootloader at 0x100000. See [flash-layout.md](flash-layout.md).

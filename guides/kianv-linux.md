@@ -71,7 +71,8 @@ ls /root
 ```
 
 While `hello_7seg` runs, the console is silent: the 7-segment display shares `uo_out[4]` with the
-UART TX pin. The program gives it back when it finishes.
+UART TX pin. The program gives it back when it finishes. Its source is
+[`linux/apps/hello-7seg`](../linux/apps/hello-7seg/hello_7seg.c); to build your own, see [linux-apps.md](linux-apps.md).
 
 The KianV UART has no receive FIFO, so the console sends what you type one character at a time, 80 ms apart.
 Pasting long text works, but slowly. Don't type while a program is busy writing output.
