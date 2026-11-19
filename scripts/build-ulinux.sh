@@ -45,11 +45,26 @@ if [ -d buildroot ] && [ ! -d buildroot/.git ]; then
   git -C buildroot -c advice.detachedHead=false checkout -q -f FETCH_HEAD
 fi
 # Packages built from a local directory are not rebuilt when their source changes, and CI restores
-# an old build tree from its cache: always rebuild our programs.
-if [ -f buildroot/.config ]; then
-  make -C buildroot tt-hello-7seg-dirclean tt-rust-nostd-dirclean tt-rust-std-dirclean
+# an old build tree from its cache: always rebuild our programs. Remove their build directories
+# directly (that is all <pkg>-dirclean does): CI restores buildroot/output but not buildroot/.config,
+# so `make <pkg>-dirclean` cannot run at this point.
+rm -rf buildroot/output/build/tt-hello-7seg buildroot/output/build/tt-rust-nostd buildroot/output/build/tt-rust-std
+# Likewise Buildroot does not rebuild an already built kernel when its patches change: rebuild it
+# from scratch whenever the kernel patches or config differ from those of the cached build.
+kpatches=bldroot/board/kianv/rv32ima/patches/linux
+kinputs=$(cat "$kpatches"/* bldroot/board/kianv/rv32ima/linux.config | sha256sum | cut -d' ' -f1)
+kstamp=buildroot/output/.tt-riscv-kernel-inputs
+if [ "$(cat "$kstamp" 2>/dev/null)" != "$kinputs" ]; then
+  echo "kernel patches or config changed: rebuilding the kernel"
+  rm -rf buildroot/output/build/linux-[0-9]* "$kstamp"
 fi
 make all CPU_FREQ="$KIANV_CPU_FREQ" BAUDRATE="$KIANV_BAUDRATE"
+# Fail if any of our kernel patches is missing from the kernel that was just built.
+applied=$(echo buildroot/output/build/linux-[0-9]*/.applied_patches_list)
+for p in "$kpatches"/*.patch; do
+  grep -q "$(basename "$p")" "$applied" || { echo "error: $(basename "$p") not applied to the kernel" >&2; exit 1; }
+done
+echo "$kinputs" > "$kstamp"
 # The bootloader copies a fixed IMAGE_SIZE, so it must be built after the Image.
 make bootloader CPU_FREQ="$KIANV_CPU_FREQ" BAUDRATE="$KIANV_BAUDRATE"
 mkdir -p "$OUT"
