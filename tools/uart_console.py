@@ -22,6 +22,7 @@ from machine import UART, Pin
 from ttboard.demoboard import DemoBoard
 
 KIANV = "tt_um_kianV_rv32ima_uLinux_SoC"
+KIANV_REGFILE = "tt_um_kianv_rv32_regfile"  # regfile edition (ttsky25b #970)
 EXIT_KEY = b"\x1d"  # Ctrl-]
 
 
@@ -114,6 +115,11 @@ def console(project, freq, baud=115200, ui=0, char_ms=80, reset_psram=True):
 def kianv(freq=30_000_000, baud=115200, ui=0, char_ms=80):
     """KianV uLinux SoC at 30 MHz (ttsky25a, ttgf0p2). Works for Linux, Zephyr/MicroPython and the memtest."""
     console(KIANV, freq, baud=baud, ui=ui, char_ms=char_ms)
+
+
+def kianv_regfile(freq=30_000_000, baud=115200, ui=0, char_ms=80):
+    """KianV regfile edition (ttsky25b #970): same images and console as kianv()."""
+    console(KIANV_REGFILE, freq, baud=baud, ui=ui, char_ms=char_ms)
 
 
 def kianv_memtest(thorough=False, freq=30_000_000):

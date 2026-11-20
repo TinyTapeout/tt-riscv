@@ -5,14 +5,14 @@ boots Linux from the QSPI Pmod. This guide boots the 16 MiB image and gives you 
 
 Time: about 15 minutes, most of it flashing and booting.
 
-| Shuttle                      | Project                                                                       | Image                                             | Status                                                    |
-| ---------------------------- | ----------------------------------------------------------------------------- | ------------------------------------------------- | --------------------------------------------------------- |
-| ttsky25a                     | `tt_um_kianV_rv32ima_uLinux_SoC` (#846), 30 MHz                               | 16 MiB image from this repo                       | tested on silicon                                         |
-| ttsky25b, ttihp25b, ttcad25a | `tt_um_kianV_rv32ima_uLinux_SoC`                                              | 16 MiB image from this repo                       | should work, not verified                                 |
-| ttgf0p2                      | `tt_um_kianV_rv32ima_uLinux_SoC` (#295), run at 30 MHz (design target 16 MHz) | 16 MiB image from this repo                       | tested on silicon                                         |
-| ttgf0p3                      | `tt_um_kianV_rv32ima_uLinux_SoC`                                              | 16 MiB image from this repo                       | should work, not verified                                 |
-| ttsky25b                     | `tt_um_kianv_rv32_regfile` (#970), regfile edition                            | 16 MiB image from this repo                       | should work, not verified                                 |
-| tt06                         | `tt_um_kianV_rv32ima_uLinux_SoC` (#910), 30 MHz, 8 MiB                        | "KianV uLinux Image (TT06)" preset in the Flasher | tested on silicon (RP2040 board, shell after about 185 s) |
+| Shuttle                      | Project                                                                            | Image                                             | Status                                                    |
+| ---------------------------- | ---------------------------------------------------------------------------------- | ------------------------------------------------- | --------------------------------------------------------- |
+| ttsky25a                     | `tt_um_kianV_rv32ima_uLinux_SoC` (#846), 30 MHz                                    | 16 MiB image from this repo                       | tested on silicon                                         |
+| ttsky25b, ttihp25b, ttcad25a | `tt_um_kianV_rv32ima_uLinux_SoC`                                                   | 16 MiB image from this repo                       | should work, not verified                                 |
+| ttgf0p2                      | `tt_um_kianV_rv32ima_uLinux_SoC` (#295), run at 30 MHz (design target 16 MHz)      | 16 MiB image from this repo                       | tested on silicon                                         |
+| ttgf0p3                      | `tt_um_kianV_rv32ima_uLinux_SoC`                                                   | 16 MiB image from this repo                       | tested on silicon                                         |
+| ttsky25b                     | `tt_um_kianv_rv32_regfile` (#970), regfile edition: `uart_console.kianv_regfile()` | 16 MiB image from this repo                       | tested on silicon                                         |
+| tt06                         | `tt_um_kianV_rv32ima_uLinux_SoC` (#910), 30 MHz, 8 MiB                             | "KianV uLinux Image (TT06)" preset in the Flasher | tested on silicon (RP2040 board, shell after about 185 s) |
 
 ## 1. Flash
 
