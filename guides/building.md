@@ -10,6 +10,7 @@ manual run with **release** checked publishes a GitHub release.
 | KianV Zephyr + MicroPython | `scripts/build-zephyr.sh`             | Docker, python3, git                                                                                        | about 15 min              |
 | KianV memtest              | `scripts/build-memtest.sh`            | `gcc-riscv64-unknown-elf`                                                                                   | seconds                   |
 | TinyQV Rust example        | `scripts/build-tinyqv-rust.sh`        | rustup (nightly from `pins.env`, rust-src, llvm-tools)                                                      | about 1 min               |
+| TinyQV Breakout (C)        | `scripts/build-tinyqv-breakout.sh`    | wget, git, make; glibc 2.38+ (for the tinyQV toolchain)                                                     | seconds + 1 GB download   |
 | TinyQV MicroPython         | `scripts/fetch-tinyqv-micropython.sh` | curl                                                                                                        | (download + sha256 check) |
 
 Each script writes its files to `out/<image>/` with a `SHA256SUMS`. Sources go to `build/`.

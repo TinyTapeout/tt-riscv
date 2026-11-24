@@ -19,5 +19,6 @@
 | KianV MicroPython  | Same image, press `m`                                                                     | `>>>` prompt; `print(355/113)`                                                                                                      |
 | TinyQV MicroPython | [program.tinyqv.com](https://program.tinyqv.com), Custom, 495 then 687, latency 2, 64 MHz | REPL; `2**100`; `Pin(15).value() == 1`                                                                                              |
 | TinyQV Rust        | Same, with `tinyqv-rust-hello.bin`                                                        | Banner and `sieve: 1229 primes`; `tqv>` answers `primes 1000`                                                                       |
+| TinyQV Breakout    | Same, with `tinyqv-breakout.bin`, design 495 only; TinyVGA, Gamepad and Audio Pmods       | Without a controller: `DEMO` and the game plays itself, with sound. With one: the paddle moves, A serves                            |
 
 Finish with the KianV uLinux image on the Pmod, so the board is ready for the next person.
