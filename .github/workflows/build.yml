@@ -146,10 +146,8 @@ jobs:
     runs-on: ubuntu-26.04
     permissions:
       contents: write
-      pages: write
-      id-token: write
-    environment:
-      name: github-pages
+    outputs:
+      pages_artifact: ${{ steps.pages_artifact.outputs.name }}
     steps:
       - uses: actions/checkout@v7
       - uses: actions/download-artifact@v8
@@ -204,6 +202,10 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          # A re-run of this job must not publish the same images twice.
+          done_tag=$(gh api "repos/$GITHUB_REPOSITORY/releases?per_page=20" \
+            --jq ".[] | select(.body | contains(\"/actions/runs/$GITHUB_RUN_ID)\")) | .tag_name" | head -n1)
+          if [ -n "$done_tag" ]; then echo "run $GITHUB_RUN_ID already published $done_tag"; exit 0; fi
           # images-YYYYMMDD; a second release on the same day gets .2, then .3, ...
           base="images-$(date -u +%Y%m%d)"
           tag=$base n=1
@@ -219,11 +221,33 @@ jobs:
           mkdir -p pages/images/latest
           cp rel/* pages/images/latest/
           rm -f pages/images/latest/kianv-ulinux-sdk.tar.gz
-      - uses: actions/configure-pages@v6
+      # One Pages artifact name per attempt: artifacts of earlier attempts stay in the run, and
+      # deploy-pages refuses a name that matches more than one.
+      - name: Pages artifact name
+        id: pages_artifact
         if: inputs.release
+        run: echo "name=github-pages-$GITHUB_RUN_ATTEMPT" >> "$GITHUB_OUTPUT"
       - uses: actions/upload-pages-artifact@v5
         if: inputs.release
         with:
           path: pages
-      - uses: actions/deploy-pages@v5
-        if: inputs.release
+          name: ${{ steps.pages_artifact.outputs.name }}
+
+  # Deploying in a job of its own: the Pages artifact is only listed reliably once the job that
+  # uploaded it has finished. Re-running this job alone deploys the same artifact again.
+  pages:
+    if: github.event_name == 'workflow_dispatch' && inputs.release
+    needs: release
+    runs-on: ubuntu-26.04
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/configure-pages@v6
+      - id: deploy
+        uses: actions/deploy-pages@v5
+        with:
+          artifact_name: ${{ needs.release.outputs.pages_artifact }}
