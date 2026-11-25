@@ -1,8 +1,7 @@
 # Zephyr and MicroPython on the KianV SoC
 
 Hirosh Dabui's [Zephyr port](https://github.com/splinedrive/kianRiscV/tree/master/asic/os/zephyr_kianv_asic)
-puts a boot menu, Zephyr and a bare-metal MicroPython into one flash image. This repo builds it with one fix
-(patch 0006): the system timer runs at the real 10 kHz `mtime` rate, so `uptime` and sleeps are correct.
+puts a boot menu, Zephyr and a bare-metal MicroPython into one flash image. This repo builds it unchanged.
 
 Tested on ttsky25a and TT06 (30 MHz; TT06 with its RP2040 demo board). It uses 8 MiB of PSRAM, so it runs on both
 the original 8 MiB KianV and the 16 MiB variants.
